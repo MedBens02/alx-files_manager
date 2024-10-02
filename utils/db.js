@@ -1,12 +1,14 @@
 import mongodb from 'mongodb';
+// eslint-disable-next-line no-unused-vars
+import Collection from 'mongodb/lib/collection';
 import envLoader from './env_loader';
 
 /**
- * Represents a MongoDB client.
+ * A MongoDB client.
  */
 class DBClient {
   /**
-   * Creates a new DBClient instance.
+   * new DBClient instance.
    */
   constructor() {
     envLoader();
@@ -16,23 +18,7 @@ class DBClient {
     const dbURL = `mongodb://${host}:${port}/${database}`;
 
     this.client = new mongodb.MongoClient(dbURL, { useUnifiedTopology: true });
-    this.connected = false;
-
-    this.connect();  // Connect on initialization
-  }
-
-  /**
-   * Asynchronously connects to the MongoDB server.
-   */
-  async connect() {
-    try {
-      await this.client.connect();
-      this.connected = true;
-      console.log('MongoDB connected successfully');
-    } catch (err) {
-      console.error('Failed to connect to MongoDB:', err.message);
-      this.connected = false;
-    }
+    this.client.connect();
   }
 
   /**
@@ -40,7 +26,7 @@ class DBClient {
    * @returns {boolean}
    */
   isAlive() {
-    return this.connected;
+    return this.client.isConnected();
   }
 
   /**
@@ -48,7 +34,6 @@ class DBClient {
    * @returns {Promise<Number>}
    */
   async nbUsers() {
-    if (!this.connected) throw new Error('Not connected to MongoDB');
     return this.client.db().collection('users').countDocuments();
   }
 
@@ -57,11 +42,25 @@ class DBClient {
    * @returns {Promise<Number>}
    */
   async nbFiles() {
-    if (!this.connected) throw new Error('Not connected to MongoDB');
     return this.client.db().collection('files').countDocuments();
+  }
+
+  /**
+   * Retrieves a reference to the `users` collection.
+   * @returns {Promise<Collection>}
+   */
+  async usersCollection() {
+    return this.client.db().collection('users');
+  }
+
+  /**
+   * Retrieves a reference to the `files` collection.
+   * @returns {Promise<Collection>}
+   */
+  async filesCollection() {
+    return this.client.db().collection('files');
   }
 }
 
 export const dbClient = new DBClient();
 export default dbClient;
-
